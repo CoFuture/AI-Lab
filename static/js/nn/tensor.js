@@ -82,7 +82,7 @@ function addConvLayer(scene, dimensionX, dimensionY, channels = 1,
     if (channels === 1)
         geometry = new THREE.PlaneBufferGeometry(6, 6, 1, 1);
     else
-        geometry = new THREE.BoxBufferGeometry(6,6, Math.min(channels, 3));
+        geometry = new THREE.BoxBufferGeometry(6, 6, Math.min(channels, 3));
 
 
     if (layerType === 0)
@@ -269,33 +269,21 @@ function addSpriteText(scene, text, text_position, text_type = -1) {
 
 
 //添加节点连线边,需要输入与前层的连接关系
-//pre_layer为一个结构体
-// let pre_layer = {
-//     id:1,
-//     dimensionX:3,
-//     dimensionY:3
-// }
-//todo 添加连接关系
-function addConnection(scene, pre_layer, cur_layer) {
-    //todo type check
-    let layer1 = scene.getObjectById(pre_layer);
-    let layer2 = scene.getObjectById(cur_layer);
 
-    //全连接关系
-    // let layer1_x = pre_layer.dimensionX;
-    // let layer1_y = pre_layer.dimensionY;
-    //
-    // let layer2_x = pre_layer.dimensionX;
-    // let layer2_y = pre_layer.dimensionY;
+//添加连接关系
+//针对一连多的全连接关系
+function addConnection(scene, pre_layer_id, cur_layer_id) {
+    //todo type check
+    let layer1 = scene.getObjectById(pre_layer_id);
+    let layer2 = scene.getObjectById(cur_layer_id);
 
     let layer1_count = layer1.count;
     let layer2_count = layer2.count;
 
-    let temp_point1 = new THREE.Object3D();
-    let temp_point2 = new THREE.Object3D();
-
     let material = new THREE.LineBasicMaterial({color: 0x778899});
     let geometry = new THREE.BufferGeometry();
+
+    // let line_group = new THREE.BufferGeometry();
     let points = [];
 
     // let line_mesh = new THREE.InstancedMesh()
@@ -306,15 +294,63 @@ function addConnection(scene, pre_layer, cur_layer) {
         let node1_position = layer1.instancePosition[random_node];
         let node2_position = layer2.instancePosition[i];
 
-        points.push(node1_position);
-        points.push(node2_position);
+        points.push(node1_position.x, node1_position.y, node1_position.z);
+        points.push(node2_position.x, node2_position.y, node2_position.z);
 
-        geometry.setFromPoints(points);
-        let line = new THREE.Line(geometry, material);
-        scene.add(line);
+        // geometry.setFromPoints(points);
+        // let line = new THREE.Line(geometry, material);
+
+        // scene.add(line);
+
     }
 
+    geometry.setAttribute('position', new THREE.Float32BufferAttribute(points, 3));
+    geometry.computeBoundingSphere();
+
+    let connect_line = new THREE.Line(geometry, material);
+    scene.add(connect_line);
+
+    // let lines = new THREE.Mesh(line_group, material);
+    // console.log("----lines----", lines);
+    // scene.add(lines);
 
 }
 
-export {addNeuralLayer, addConvLayer, addPoolLayer, addConnection};
+//添加连接关系
+//针对一对一连接，适用于神经元——卷积层和神经元——池化
+//layer: id:1 dimension:
+function addConnectionEqual(scene, pre_layer, cur_layer) {
+    let layer1 = scene.getObjectById(pre_layer.id);
+    let layer2 = scene.getObjectById(cur_layer.id);
+
+    let layer1_dy = pre_layer.dimension_y;
+    //获取卷积层或者池化层的dimension
+    let layer2_dx = cur_layer.dimension_x;
+    let layer2_dy = cur_layer.dimension_y;
+
+    let material = new THREE.LineBasicMaterial({color: 0x778899});
+
+    // let line_group = new THREE.BufferGeometry();
+    let points = [];
+
+    // let line_mesh = new THREE.InstancedMesh()
+
+    for (let i = 0; i < layer2_dx; i++) {
+        for (let j = 0; j < layer2_dy; j++) {
+            let node1_position = layer1.instancePosition[i * layer1_dy + j];
+            let node2_position = layer2.instancePosition[i * layer2_dy + j];
+
+            points.push(node1_position);
+            points.push(node2_position);
+
+            let geometry = new THREE.BufferGeometry();
+            geometry.setFromPoints(points);
+            let line = new THREE.Line(geometry, material);
+
+            scene.add(line);
+            points = [];
+        }
+    }
+}
+
+export {addNeuralLayer, addConvLayer, addPoolLayer, addConnection, addConnectionEqual};

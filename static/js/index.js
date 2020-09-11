@@ -1,6 +1,6 @@
 import * as THREE from "./libs/three.module.js"
 import {OrbitControls} from "./libs/OrbitControls.js";
-import {addConnection, addConvLayer, addNeuralLayer, addPoolLayer} from "./nn/tensor.js";
+import {addConnection, addConnectionEqual, addConvLayer, addNeuralLayer, addPoolLayer} from "./nn/tensor.js";
 
 
 let canvas, camera, controls, scene, renderer;
@@ -56,6 +56,9 @@ function init() {
     //添加卷积层
     let conv_layer1_id = addConvLayer(scene, 3, 3, 25, 1, 20);
 
+    addConnectionEqual(scene, {id:input_layer_id, dimension_x:28, dimension_y:28},
+        {id: conv_layer1_id, dimension_x: 3, dimension_y: 3})
+
     //添加神经层
     let neural_layer1_id = addNeuralLayer(scene, 26, 26, 25, 40);
 
@@ -64,12 +67,19 @@ function init() {
     //添加池化层
     let pool_layer1_id = addPoolLayer(scene, 2, 2, 0, "max", 60);
 
+    addConnectionEqual(scene, {id:neural_layer1_id, dimension_x:26, dimension_y:26},
+        {id: pool_layer1_id, dimension_x: 2, dimension_y: 2});
 
     //添加神经层
     let neural_layer2_id = addNeuralLayer(scene, 13, 13, 25, 80);
 
+    addConnectionEqual(scene, neural_layer2_id, pool_layer1_id);
+
     //添加卷积层
     let conv_layer2_id = addConvLayer(scene, 4, 4, 50, 1, 100);
+
+    addConnectionEqual(scene, {id:neural_layer2_id, dimension_x:13, dimension_y:13},
+        {id: conv_layer2_id, dimension_x: 4, dimension_y: 4})
 
     //添加神经层
     let neural_layer3_id = addNeuralLayer(scene, 10, 10, 50, 120);
@@ -79,8 +89,13 @@ function init() {
     //添加池化层
     let pool_layer2_id = addPoolLayer(scene, 2, 2, 0, "max", 140);
 
+    addConnectionEqual(scene, {id:neural_layer3_id, dimension_x:10, dimension_y:10},
+        {id: pool_layer2_id, dimension_x: 2, dimension_y: 2})
+
     //添加神经层                                                       
     let neural_layer4_id = addNeuralLayer(scene, 5, 5, 50, 160);
+
+    addConnection(scene, neural_layer4_id, pool_layer2_id);
 
     //添加全连接层
     let fully_layer1_id = addNeuralLayer(scene, 32, 32, 1, 180, 1);

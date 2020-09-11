@@ -73,7 +73,7 @@ function init() {
     //添加神经层
     let neural_layer2_id = addNeuralLayer(scene, 13, 13, 25, 80);
 
-    addConnectionEqual(scene, neural_layer2_id, pool_layer1_id);
+    addConnection(scene, neural_layer2_id, pool_layer1_id);
 
     //添加卷积层
     let conv_layer2_id = addConvLayer(scene, 4, 4, 50, 1, 100);
